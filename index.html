@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚽ Catch the Soccer Balls!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', 'Arial Black', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            touch-action: none;
+            position: relative;
+        }
+
+        /* Animated background stars */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-image: radial-gradient(2px 2px at 20% 30%, white, transparent),
+                              radial-gradient(2px 2px at 60% 70%, white, transparent),
+                              radial-gradient(1px 1px at 50% 50%, white, transparent),
+                              radial-gradient(1px 1px at 80% 10%, white, transparent);
+            background-size: 200px 200px;
+            animation: twinkle 3s ease-in-out infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            color: white;
+            font-size: 2.8em;
+            margin-bottom: 20px;
+            text-shadow:
+                4px 4px 0px rgba(0,0,0,0.3),
+                0 0 20px rgba(255,255,255,0.5);
+            animation: titleFloat 3s ease-in-out infinite;
+            letter-spacing: 2px;
+        }
+
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            padding: 15px 25px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            box-shadow:
+                0 10px 30px rgba(0,0,0,0.3),
+                inset 0 2px 0 rgba(255,255,255,0.8),
+                inset 0 -2px 0 rgba(0,0,0,0.1);
+            border: 3px solid rgba(255,255,255,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .info-item {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-value {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #f5576c;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .info-value.pulse {
+            animation: scorePulse 0.5s ease-out;
+        }
+
+        @keyframes scorePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        canvas {
+            border: 6px solid white;
+            border-radius: 20px;
+            display: block;
+            margin: 0 auto;
+            box-shadow:
+                0 15px 40px rgba(0,0,0,0.4),
+                inset 0 3px 15px rgba(0,0,0,0.2),
+                0 0 0 3px rgba(255,255,255,0.3);
+            background: linear-gradient(180deg, #87CEEB 0%, #90EE90 100%);
+            cursor: none;
+        }
+
+        button {
+            font-family: 'Nunito', sans-serif;
+            padding: 22px 55px;
+            font-size: 1.9em;
+            margin: 20px 10px;
+            background: linear-gradient(145deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow:
+                0 10px 25px rgba(245, 87, 108, 0.5),
+                inset 0 -5px 0 rgba(0,0,0,0.2),
+                inset 0 3px 0 rgba(255,255,255,0.3);
+            font-weight: 900;
+            transition: all 0.2s;
+            position: relative;
+            border: 3px solid rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow:
+                0 15px 35px rgba(245, 87, 108, 0.6),
+                inset 0 -5px 0 rgba(0,0,0,0.2),
+                inset 0 3px 0 rgba(255,255,255,0.3);
+        }
+
+        button:active {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow:
+                0 8px 20px rgba(245, 87, 108, 0.4),
+                inset 0 3px 0 rgba(0,0,0,0.3),
+                inset 0 -1px 0 rgba(255,255,255,0.2);
+        }
+
+        .instructions {
+            background: linear-gradient(145deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15));
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            color: white;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 1.15em;
+            line-height: 1.8;
+            box-shadow:
+                0 10px 30px rgba(0,0,0,0.2),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .instructions h3 {
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin: 10px 0;
+            font-weight: 800;
+        }
+
+        .high-score {
+            background: linear-gradient(145deg, #FFD700, #FFA500);
+            padding: 18px;
+            border-radius: 15px;
+            margin: 15px 0;
+            color: white;
+            font-size: 1.4em;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            box-shadow:
+                0 8px 25px rgba(255, 215, 0, 0.5),
+                inset 0 2px 0 rgba(255,255,255,0.4);
+            border: 3px solid rgba(255,255,255,0.5);
+        }
+
+        .final-score {
+            font-family: 'Fredoka One', cursive;
+            font-size: 5em;
+            color: #FFD700;
+            text-shadow:
+                4px 4px 0px rgba(0,0,0,0.3),
+                0 0 30px rgba(255,215,0,0.8);
+            margin: 20px 0;
+            animation: scoreReveal 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes scoreReveal {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .message {
+            font-size: 1.5em;
+            margin: 15px 0;
+            color: white;
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            padding: 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .combo-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Fredoka One', cursive;
+            font-size: 4em;
+            color: #FFD700;
+            text-shadow:
+                4px 4px 0px rgba(0,0,0,0.5),
+                0 0 20px rgba(255,215,0,1);
+            pointer-events: none;
+            z-index: 1000;
+            animation: comboPopup 1s ease-out forwards;
+        }
+
+        @keyframes comboPopup {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.3);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -100%) scale(1);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2em;
+            }
+
+            .info-value {
+                font-size: 2em;
+            }
+
+            button {
+                font-size: 1.5em;
+                padding: 18px 40px;
+            }
+
+            .final-score {
+                font-size: 3.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <h1>⚽ CATCH THE SOCCER BALLS! ⚽</h1>
+
+            <div class="instructions">
+                <h3>📋 HOW TO PLAY:</h3>
+                <ul>
+                    <li>⚽ <strong>Catch soccer balls</strong> = +10 points</li>
+                    <li>🟥 <strong>Avoid red cards</strong> = -5 points</li>
+                    <li>🔥 <strong>Catch 3 in a row</strong> = COMBO BONUS!</li>
+                    <li>⏱️ You have <strong>60 seconds</strong></li>
+                    <li>🎮 Move with <strong>mouse, arrows, or touch</strong></li>
+                </ul>
+            </div>
+
+            <div class="high-score" id="high-score-start">
+                🏆 High Score: <span id="hs-value-start">0</span>
+            </div>
+
+            <button onclick="startGame()">START GAME</button>
+
+            <div class="message">
+                Challenge your sibling! Who can get the highest score? 🏆
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-info">
+                <div class="info-item">
+                    <div class="info-label">SCORE</div>
+                    <div class="info-value" id="score">0</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">TIME</div>
+                    <div class="info-value" id="timer">60</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">COMBO</div>
+                    <div class="info-value" id="combo">0</div>
+                </div>
+            </div>
+
+            <canvas id="game-canvas" width="500" height="600"></canvas>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen">
+            <h1>⚽ GAME OVER! ⚽</h1>
+
+            <div class="final-score" id="final-score">0</div>
+
+            <div class="message" id="result-message">Great job!</div>
+
+            <div class="high-score" id="high-score-final">
+                🏆 High Score: <span id="hs-value-final">0</span>
+            </div>
+
+            <div class="message">
+                📱 Tell your sibling your score and challenge them to beat it!
+            </div>
+
+            <button onclick="playAgain()">PLAY AGAIN</button>
+            <button onclick="backToMenu()">MENU</button>
+        </div>
+    </div>
+
+    <script>
+        console.log('🎮 Game loading...');
+
+        // Particle class for effects
+        class Particle {
+            constructor(x, y, color, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.vx = vx;
+                this.vy = vy;
+                this.life = 1.0;
+                this.size = Math.random() * 8 + 4;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.2; // gravity
+                this.life -= 0.02;
+                return this.life > 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Score popup class
+        class ScorePopup {
+            constructor(x, y, text, color) {
+                this.x = x;
+                this.y = y;
+                this.text = text;
+                this.color = color;
+                this.life = 1.0;
+                this.vy = -2;
+            }
+
+            update() {
+                this.y += this.vy;
+                this.life -= 0.02;
+                return this.life > 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.font = 'bold 30px Fredoka One';
+                ctx.textAlign = 'center';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        // Game state
+        const game = {
+            canvas: null,
+            ctx: null,
+            score: 0,
+            combo: 0,
+            maxCombo: 0,
+            timeLeft: 60,
+            highScore: 0,
+            isRunning: false,
+            goalkeeper: { x: 250, y: 550, width: 60, height: 80, speed: 8 },
+            items: [],
+            particles: [],
+            scorePopups: [],
+            keys: {},
+            mouseX: 250,
+            touchX: null,
+            lastSpawnTime: 0,
+            spawnInterval: 1000,
+            gameStartTime: 0,
+            clouds: [],
+            birds: [],
+            sunAngle: 0
+        };
+
+        // Initialize clouds
+        function initClouds() {
+            game.clouds = [];
+            for (let i = 0; i < 3; i++) {
+                game.clouds.push({
+                    x: Math.random() * 500,
+                    y: Math.random() * 100 + 20,
+                    speed: Math.random() * 0.3 + 0.2,
+                    size: Math.random() * 30 + 40
+                });
+            }
+        }
+
+        // Load high score
+        function loadHighScore() {
+            const saved = localStorage.getItem('soccerBallsHighScore');
+            game.highScore = saved ? parseInt(saved) : 0;
+            updateHighScoreDisplay();
+        }
+
+        // Save high score
+        function saveHighScore() {
+            if (game.score > game.highScore) {
+                game.highScore = game.score;
+                localStorage.setItem('soccerBallsHighScore', game.highScore);
+            }
+        }
+
+        // Update high score displays
+        function updateHighScoreDisplay() {
+            document.getElementById('hs-value-start').textContent = game.highScore;
+            document.getElementById('hs-value-final').textContent = game.highScore;
+        }
+
+        // Start game
+        function startGame() {
+            console.log('🚀 Starting game...');
+
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('game-screen').classList.add('active');
+
+            game.canvas = document.getElementById('game-canvas');
+            game.ctx = game.canvas.getContext('2d');
+
+            game.score = 0;
+            game.combo = 0;
+            game.maxCombo = 0;
+            game.timeLeft = 60;
+            game.items = [];
+            game.particles = [];
+            game.scorePopups = [];
+            game.goalkeeper.x = 250;
+            game.isRunning = true;
+            game.gameStartTime = Date.now();
+            game.lastSpawnTime = 0;
+            game.spawnInterval = 1000;
+            game.sunAngle = 0;
+
+            initClouds();
+            updateUI();
+            setupControls();
+            gameLoop();
+            startTimer();
+        }
+
+        // Setup controls
+        function setupControls() {
+            document.addEventListener('keydown', (e) => {
+                game.keys[e.key] = true;
+            });
+
+            document.addEventListener('keyup', (e) => {
+                game.keys[e.key] = false;
+            });
+
+            game.canvas.addEventListener('mousemove', (e) => {
+                const rect = game.canvas.getBoundingClientRect();
+                game.mouseX = e.clientX - rect.left;
+            });
+
+            game.canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const rect = game.canvas.getBoundingClientRect();
+                game.touchX = e.touches[0].clientX - rect.left;
+            });
+
+            game.canvas.addEventListener('touchend', () => {
+                game.touchX = null;
+            });
+        }
+
+        // Start timer
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                if (!game.isRunning) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+
+                game.timeLeft--;
+                updateUI();
+
+                if (game.timeLeft <= 0) {
+                    endGame();
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+        }
+
+        // Create particles
+        function createParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i;
+                const speed = Math.random() * 3 + 2;
+                game.particles.push(new Particle(
+                    x, y, color,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed - 2
+                ));
+            }
+        }
+
+        // Show combo popup
+        function showCombo() {
+            const popup = document.createElement('div');
+            popup.className = 'combo-display';
+            popup.textContent = `${game.combo}X COMBO! 🔥`;
+            document.body.appendChild(popup);
+            setTimeout(() => popup.remove(), 1000);
+        }
+
+        // Spawn items
+        function spawnItem() {
+            const now = Date.now() - game.gameStartTime;
+            if (now - game.lastSpawnTime < game.spawnInterval) return;
+
+            game.lastSpawnTime = now;
+            const isBall = Math.random() < 0.7;
+
+            game.items.push({
+                x: Math.random() * (game.canvas.width - 40) + 20,
+                y: -40,
+                width: 40,
+                height: 40,
+                speed: 2 + Math.random() * 2,
+                isBall: isBall,
+                rotation: 0
+            });
+
+            if (game.spawnInterval > 400) {
+                game.spawnInterval -= 10;
+            }
+        }
+
+        // Update game
+        function update() {
+            if (!game.isRunning) return;
+
+            // Update goalkeeper
+            if (game.touchX !== null) {
+                game.goalkeeper.x = game.touchX - game.goalkeeper.width / 2;
+            } else if (game.keys['ArrowLeft'] || game.keys['a']) {
+                game.goalkeeper.x -= game.goalkeeper.speed;
+            } else if (game.keys['ArrowRight'] || game.keys['d']) {
+                game.goalkeeper.x += game.goalkeeper.speed;
+            } else {
+                game.goalkeeper.x += (game.mouseX - game.goalkeeper.x - game.goalkeeper.width / 2) * 0.15;
+            }
+
+            if (game.goalkeeper.x < 0) game.goalkeeper.x = 0;
+            if (game.goalkeeper.x > game.canvas.width - game.goalkeeper.width) {
+                game.goalkeeper.x = game.canvas.width - game.goalkeeper.width;
+            }
+
+            // Spawn items
+            spawnItem();
+
+            // Update items
+            for (let i = game.items.length - 1; i >= 0; i--) {
+                const item = game.items[i];
+                item.y += item.speed;
+                item.rotation += 0.1;
+
+                // Check collision
+                if (item.y + item.height > game.goalkeeper.y &&
+                    item.y < game.goalkeeper.y + game.goalkeeper.height &&
+                    item.x + item.width > game.goalkeeper.x &&
+                    item.x < game.goalkeeper.x + game.goalkeeper.width) {
+
+                    if (item.isBall) {
+                        game.score += 10;
+                        game.combo++;
+                        if (game.combo > game.maxCombo) game.maxCombo = game.combo;
+
+                        createParticles(item.x + 20, item.y + 20, '#FFD700', 15);
+                        game.scorePopups.push(new ScorePopup(item.x + 20, item.y, '+10', '#00FF00'));
+
+                        if (game.combo >= 3 && game.combo % 3 === 0) {
+                            const bonus = game.combo * 5;
+                            game.score += bonus;
+                            showCombo();
+                            game.scorePopups.push(new ScorePopup(item.x + 20, item.y - 30, `+${bonus} COMBO!`, '#FFD700'));
+                        }
+                    } else {
+                        game.score -= 5;
+                        if (game.score < 0) game.score = 0;
+                        game.combo = 0;
+
+                        createParticles(item.x + 20, item.y + 20, '#FF0000', 10);
+                        game.scorePopups.push(new ScorePopup(item.x + 20, item.y, '-5', '#FF0000'));
+                    }
+
+                    game.items.splice(i, 1);
+                    updateUI();
+                    continue;
+                }
+
+                if (item.y > game.canvas.height) {
+                    if (item.isBall) {
+                        game.combo = 0; // Break combo if missed
+                        updateUI();
+                    }
+                    game.items.splice(i, 1);
+                }
+            }
+
+            // Update particles
+            game.particles = game.particles.filter(p => p.update());
+
+            // Update score popups
+            game.scorePopups = game.scorePopups.filter(p => p.update());
+
+            // Update clouds
+            game.clouds.forEach(cloud => {
+                cloud.x += cloud.speed;
+                if (cloud.x > 550) cloud.x = -50;
+            });
+
+            // Update sun
+            game.sunAngle += 0.01;
+        }
+
+        // Draw game
+        function draw() {
+            const ctx = game.ctx;
+            const w = game.canvas.width;
+            const h = game.canvas.height;
+
+            // Sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, h);
+            gradient.addColorStop(0, '#4A90E2');
+            gradient.addColorStop(0.3, '#87CEEB');
+            gradient.addColorStop(0.6, '#7EC850');
+            gradient.addColorStop(1, '#3D8B37');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, w, h);
+
+            // Sun
+            const sunX = 450;
+            const sunY = 80 + Math.sin(game.sunAngle) * 5;
+            const sunGradient = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, 40);
+            sunGradient.addColorStop(0, '#FFF9E6');
+            sunGradient.addColorStop(0.5, '#FFE44D');
+            sunGradient.addColorStop(1, 'rgba(255,228,77,0)');
+            ctx.fillStyle = sunGradient;
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sun rays
+            for (let i = 0; i < 12; i++) {
+                const angle = (Math.PI * 2 / 12) * i + game.sunAngle;
+                ctx.strokeStyle = 'rgba(255,228,77,0.3)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(sunX + Math.cos(angle) * 40, sunY + Math.sin(angle) * 40);
+                ctx.lineTo(sunX + Math.cos(angle) * 60, sunY + Math.sin(angle) * 60);
+                ctx.stroke();
+            }
+
+            // Clouds
+            game.clouds.forEach(cloud => {
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.beginPath();
+                ctx.arc(cloud.x, cloud.y, cloud.size * 0.5, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size * 0.4, cloud.y, cloud.size * 0.6, 0, Math.PI * 2);
+                ctx.arc(cloud.x - cloud.size * 0.4, cloud.y, cloud.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Grass lines with depth
+            for (let i = 0; i < 20; i++) {
+                const alpha = 0.1 + (i / 20) * 0.3;
+                ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, i * 30);
+                ctx.lineTo(w, i * 30);
+                ctx.stroke();
+            }
+
+            // Draw items
+            game.items.forEach(item => {
+                if (item.isBall) {
+                    const ballX = item.x + 20;
+                    const ballY = item.y + 20;
+                    const radius = 18;
+
+                    // Shadow
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.beginPath();
+                    ctx.ellipse(ballX + 2, ballY + 23, radius - 3, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.save();
+                    ctx.translate(ballX, ballY);
+                    ctx.rotate(item.rotation);
+
+                    // 3D ball
+                    const ballGradient = ctx.createRadialGradient(-5, -5, 2, 0, 0, radius);
+                    ballGradient.addColorStop(0, '#FFFFFF');
+                    ballGradient.addColorStop(0.4, '#F5F5F5');
+                    ballGradient.addColorStop(1, '#C0C0C0');
+
+                    ctx.fillStyle = ballGradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.strokeStyle = '#333333';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    // Pattern
+                    ctx.strokeStyle = '#222222';
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(Math.cos(angle) * 11, Math.sin(angle) * 11);
+                        ctx.stroke();
+                    }
+
+                    // Highlight
+                    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                    ctx.beginPath();
+                    ctx.arc(-6, -6, 5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.restore();
+
+                } else {
+                    // Red card
+                    const cardX = item.x + 5;
+                    const cardY = item.y;
+
+                    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                    ctx.fillRect(cardX + 4, cardY + 4, 30, 40);
+
+                    const cardGradient = ctx.createLinearGradient(cardX, cardY, cardX + 30, cardY);
+                    cardGradient.addColorStop(0, '#FF4444');
+                    cardGradient.addColorStop(0.5, '#FF0000');
+                    cardGradient.addColorStop(1, '#CC0000');
+
+                    ctx.fillStyle = cardGradient;
+                    ctx.fillRect(cardX, cardY, 30, 40);
+
+                    ctx.strokeStyle = '#660000';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(cardX, cardY, 30, 40);
+
+                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                    ctx.fillRect(cardX + 3, cardY + 3, 24, 10);
+                }
+            });
+
+            // Draw goalkeeper
+            const gk = game.goalkeeper;
+
+            // Shadow
+            const shadowGradient = ctx.createRadialGradient(
+                gk.x + gk.width/2, gk.y + gk.height + 5, 0,
+                gk.x + gk.width/2, gk.y + gk.height + 5, gk.width
+            );
+            shadowGradient.addColorStop(0, 'rgba(0,0,0,0.4)');
+            shadowGradient.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = shadowGradient;
+            ctx.beginPath();
+            ctx.ellipse(gk.x + gk.width/2, gk.y + gk.height + 10, gk.width/2 + 5, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body
+            const bodyGradient = ctx.createLinearGradient(gk.x, gk.y, gk.x + gk.width, gk.y);
+            bodyGradient.addColorStop(0, '#3DB0A6');
+            bodyGradient.addColorStop(0.5, '#4ECDC4');
+            bodyGradient.addColorStop(1, '#3DB0A6');
+
+            ctx.fillStyle = bodyGradient;
+            ctx.fillRect(gk.x + 10, gk.y + 20, gk.width - 20, gk.height - 40);
+
+            ctx.strokeStyle = '#2A7A73';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(gk.x + 10, gk.y + 20, gk.width - 20, gk.height - 40);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(gk.x + 12, gk.y + 22, gk.width - 24, 10);
+
+            // Head
+            const headGradient = ctx.createRadialGradient(
+                gk.x + gk.width/2 - 3, gk.y + 12, 2,
+                gk.x + gk.width/2, gk.y + 15, 15
+            );
+            headGradient.addColorStop(0, '#FFE4C4');
+            headGradient.addColorStop(0.6, '#FFD4A3');
+            headGradient.addColorStop(1, '#E0B080');
+
+            ctx.fillStyle = headGradient;
+            ctx.beginPath();
+            ctx.arc(gk.x + gk.width/2, gk.y + 15, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#B8936E';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Happy face
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(gk.x + gk.width/2 - 5, gk.y + 12, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(gk.x + gk.width/2 + 5, gk.y + 12, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(gk.x + gk.width/2, gk.y + 18, 5, 0, Math.PI);
+            ctx.stroke();
+
+            // Gloves
+            const gloveGradient = ctx.createRadialGradient(
+                gk.x + 3, gk.y + 38, 2,
+                gk.x + 5, gk.y + 40, 10
+            );
+            gloveGradient.addColorStop(0, '#FFE44D');
+            gloveGradient.addColorStop(0.6, '#FFD700');
+            gloveGradient.addColorStop(1, '#CCAA00');
+
+            ctx.fillStyle = gloveGradient;
+            ctx.beginPath();
+            ctx.arc(gk.x + 5, gk.y + 40, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#B8960A';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.beginPath();
+            ctx.arc(gk.x + 3, gk.y + 38, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = gloveGradient;
+            ctx.beginPath();
+            ctx.arc(gk.x + gk.width - 5, gk.y + 40, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#B8960A';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.beginPath();
+            ctx.arc(gk.x + gk.width - 7, gk.y + 38, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw particles
+            game.particles.forEach(p => p.draw(ctx));
+
+            // Draw score popups
+            game.scorePopups.forEach(p => p.draw(ctx));
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!game.isRunning) return;
+
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Update UI
+        function updateUI() {
+            const scoreEl = document.getElementById('score');
+            scoreEl.textContent = game.score;
+            scoreEl.classList.add('pulse');
+            setTimeout(() => scoreEl.classList.remove('pulse'), 500);
+
+            document.getElementById('timer').textContent = game.timeLeft;
+            document.getElementById('combo').textContent = game.combo + 'x';
+        }
+
+        // End game
+        function endGame() {
+            console.log('🏁 Game over! Score:', game.score);
+            game.isRunning = false;
+
+            saveHighScore();
+
+            document.getElementById('final-score').textContent = game.score;
+
+            let message = '';
+            if (game.score >= game.highScore) {
+                message = '🏆 NEW HIGH SCORE! AMAZING! 🏆';
+            } else if (game.score >= 300) {
+                message = '⭐ INCREDIBLE! You\'re a pro! ⭐';
+            } else if (game.score >= 200) {
+                message = '🎉 GREAT JOB! Keep it up! 🎉';
+            } else if (game.score >= 100) {
+                message = '👍 Nice work! Try to beat it! 👍';
+            } else {
+                message = '💪 Good try! Practice makes perfect! 💪';
+            }
+
+            if (game.maxCombo >= 5) {
+                message += ` Best combo: ${game.maxCombo}x! 🔥`;
+            }
+
+            document.getElementById('result-message').textContent = message;
+            updateHighScoreDisplay();
+
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('gameover-screen').classList.add('active');
+        }
+
+        // Play again
+        function playAgain() {
+            document.getElementById('gameover-screen').classList.remove('active');
+            startGame();
+        }
+
+        // Back to menu
+        function backToMenu() {
+            document.getElementById('gameover-screen').classList.remove('active');
+            document.getElementById('start-screen').classList.add('active');
+        }
+
+        // Initialize
+        loadHighScore();
+        console.log('✅ Game ready!');
+    </script>
+</body>
+</html>
