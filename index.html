@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚽ Soccer Zone Runner - Reach the Mythic Zone!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka+One&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Fredoka One', cursive;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #87CEEB;
+        }
+
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.92);
+            color: white;
+            z-index: 10;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        #gameOverScreen {
+            justify-content: center;
+        }
+
+        #startScreen h1 {
+            font-family: 'Bangers', cursive;
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 0 #ff6b6b, 8px 8px 0 rgba(0,0,0,0.3);
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .zone-list {
+            margin: 30px 0;
+            font-size: 20px;
+            text-align: left;
+        }
+
+        .zone-item {
+            margin: 10px 0;
+            padding: 10px 20px;
+            border-radius: 10px;
+            display: inline-block;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .common { background: linear-gradient(90deg, #808080, #a0a0a0); }
+        .rare { background: linear-gradient(90deg, #4a90e2, #67b5ff); }
+        .epic { background: linear-gradient(90deg, #9b59b6, #c084fc); }
+        .legendary { background: linear-gradient(90deg, #f39c12, #ffb347); }
+        .mythic { background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff, #06ffa5);
+                  background-size: 300% 300%;
+                  animation: rainbow 3s ease infinite; }
+
+        @keyframes rainbow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        button {
+            font-family: 'Bangers', cursive;
+            font-size: 32px;
+            padding: 15px 40px;
+            margin: 10px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            margin: 20px 0;
+            font-size: 18px;
+            color: #ffd700;
+        }
+
+        .instructions {
+            max-width: 700px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .instructions h2 {
+            font-family: 'Bangers', cursive;
+            font-size: 28px;
+            color: #FFD700;
+            margin-bottom: 15px;
+        }
+
+        .instructions h3 {
+            font-size: 20px;
+            color: #4ECDC4;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            text-align: left;
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+
+        .control-option {
+            background: rgba(78, 205, 196, 0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 5px 0;
+            display: inline-block;
+        }
+
+        #finalStats {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="startScreen">
+            <h1>⚽ SOCCER ZONE RUNNER ⚽</h1>
+
+            <div class="instructions">
+                <h2>🎮 HOW TO PLAY</h2>
+                <p><strong>Your Mission:</strong> Run through 5 amazing zones and reach the MYTHIC ZONE to become a LEGEND! 🌟</p>
+
+                <h3>🕹️ CONTROLS (Pick what works for you!)</h3>
+                <ul>
+                    <li><div class="control-option">⌨️ <strong>KEYBOARD:</strong> Press ⬆️ UP and ⬇️ DOWN arrow keys to move your player</div></li>
+                    <li><div class="control-option">🖱️ <strong>MOUSE:</strong> Move your mouse up and down to control your player</div></li>
+                    <li><div class="control-option">📱 <strong>TOUCHSCREEN (Chromebook/Tablet):</strong> Touch and drag your finger up/down</div></li>
+                </ul>
+
+                <h3>⚽ WHAT TO DO</h3>
+                <ul>
+                    <li>✅ <strong>COLLECT</strong> golden soccer balls = +10 points each!</li>
+                    <li>❌ <strong>DODGE</strong> traffic cones and opponent players!</li>
+                    <li>🏃 <strong>KEEP RUNNING</strong> to reach higher zones!</li>
+                    <li>🎯 <strong>GOAL:</strong> Reach 3500m to enter the MYTHIC ZONE and WIN!</li>
+                </ul>
+
+                <h3>🌈 THE 5 ZONES</h3>
+            </div>
+
+            <div class="zone-list">
+                <div class="zone-item common">🔸 COMMON ZONE (0m) - Easy start!</div><br>
+                <div class="zone-item rare">💎 RARE ZONE (500m) - Getting faster!</div><br>
+                <div class="zone-item epic">⚡ EPIC ZONE (1200m) - Super challenging!</div><br>
+                <div class="zone-item legendary">👑 LEGENDARY ZONE (2200m) - Almost there!</div><br>
+                <div class="zone-item mythic">🌟 MYTHIC ZONE (3500m) - YOU WIN! 🏆</div>
+            </div>
+
+            <div class="instructions">
+                <h3>💡 TIPS</h3>
+                <ul>
+                    <li>Watch the progress bar at the bottom to see which zone you're in!</li>
+                    <li>If you hit an obstacle, you lose 50m of progress - be careful!</li>
+                    <li>Each zone gets FASTER and more challenging!</li>
+                    <li>The MYTHIC zone has rainbow colors and flying stars! ✨</li>
+                </ul>
+
+                <h3>💻 WORKS ON</h3>
+                <ul>
+                    <li>✅ Desktop & Laptop computers</li>
+                    <li>✅ Chromebooks (keyboard and touchscreen!)</li>
+                    <li>✅ Tablets (iPad, Android tablets)</li>
+                    <li>✅ All browsers: Chrome, Safari, Firefox, Edge</li>
+                </ul>
+            </div>
+
+            <button onclick="startGame()">START RUNNING!</button>
+        </div>
+
+        <div id="gameOverScreen" class="hidden">
+            <h1 id="gameOverTitle">🏆 AMAZING! 🏆</h1>
+            <div id="finalStats"></div>
+            <button onclick="restartGame()">PLAY AGAIN!</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game state
+        const game = {
+            running: false,
+            player: {
+                x: 100,
+                y: canvas.height / 2,
+                width: 40,
+                height: 60,
+                speed: 5,
+                targetY: canvas.height / 2,
+                hasBall: true,
+                legAngle: 0
+            },
+            distance: 0,
+            score: 0,
+            currentZone: 0,
+            obstacles: [],
+            collectibles: [],
+            particles: [],
+            gameSpeed: 3,
+            keys: {},
+            mouseY: null,
+            frame: 0,
+            won: false
+        };
+
+        // Zone definitions
+        const zones = [
+            { name: 'COMMON', color: '#808080', textColor: '#ffffff', distance: 0, speed: 3, bgColor1: '#90EE90', bgColor2: '#7CCD7C' },
+            { name: 'RARE', color: '#4a90e2', textColor: '#ffffff', distance: 500, speed: 4, bgColor1: '#87CEEB', bgColor2: '#6CB4E8' },
+            { name: 'EPIC', color: '#9b59b6', textColor: '#ffffff', distance: 1200, speed: 5, bgColor1: '#DDA0DD', bgColor2: '#C084FC' },
+            { name: 'LEGENDARY', color: '#f39c12', textColor: '#ffffff', distance: 2200, speed: 6.5, bgColor1: '#FFD700', bgColor2: '#FFA500' },
+            { name: 'MYTHIC', color: '#ff006e', textColor: '#ffffff', distance: 3500, speed: 8, bgColor1: '#FF69B4', bgColor2: '#9370DB' }
+        ];
+
+        // Particle class
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.life = 1;
+                this.color = color;
+                this.size = Math.random() * 6 + 3;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.3;
+                this.life -= 0.02;
+                return this.life > 0;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            game.keys[e.key] = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            game.keys[e.key] = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            game.mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            game.mouseY = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height);
+        });
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            game.running = true;
+            game.distance = 0;
+            game.score = 0;
+            game.currentZone = 0;
+            game.obstacles = [];
+            game.collectibles = [];
+            game.particles = [];
+            game.gameSpeed = 3;
+            game.player.y = canvas.height / 2;
+            game.player.targetY = canvas.height / 2;
+            game.won = false;
+            game.frame = 0;
+            gameLoop();
+        }
+
+        function restartGame() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            startGame();
+        }
+
+        function spawnObstacle() {
+            const types = ['cone', 'player'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            game.obstacles.push({
+                x: canvas.width,
+                y: Math.random() * (canvas.height - 100) + 50,
+                width: type === 'cone' ? 30 : 40,
+                height: type === 'cone' ? 40 : 60,
+                type: type
+            });
+        }
+
+        function spawnCollectible() {
+            game.collectibles.push({
+                x: canvas.width,
+                y: Math.random() * (canvas.height - 100) + 50,
+                width: 30,
+                height: 30,
+                angle: 0
+            });
+        }
+
+        function updateZone() {
+            for (let i = zones.length - 1; i >= 0; i--) {
+                if (game.distance >= zones[i].distance) {
+                    if (game.currentZone !== i) {
+                        game.currentZone = i;
+                        game.gameSpeed = zones[i].speed;
+
+                        // Zone transition effect
+                        for (let j = 0; j < 30; j++) {
+                            game.particles.push(new Particle(
+                                canvas.width / 2,
+                                canvas.height / 2,
+                                zones[i].color
+                            ));
+                        }
+
+                        // Check if reached mythic
+                        if (i === 4) {
+                            setTimeout(() => {
+                                game.won = true;
+                                endGame();
+                            }, 2000);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        function drawBackground() {
+            const zone = zones[game.currentZone];
+
+            // Gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, zone.bgColor1);
+            gradient.addColorStop(1, zone.bgColor2);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Moving field lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 3;
+            const lineOffset = (game.distance * game.gameSpeed * 2) % 100;
+            for (let i = -100; i < canvas.width + 100; i += 100) {
+                ctx.beginPath();
+                ctx.moveTo(i - lineOffset, 0);
+                ctx.lineTo(i - lineOffset, canvas.height);
+                ctx.stroke();
+            }
+
+            // Mythic zone special effects
+            if (game.currentZone === 4) {
+                for (let i = 0; i < 5; i++) {
+                    const starX = (game.frame * 2 + i * 150) % canvas.width;
+                    const starY = Math.sin(game.frame * 0.05 + i) * 50 + 100;
+                    drawStar(starX, starY, 15, 'rgba(255, 255, 255, 0.6)');
+                }
+            }
+        }
+
+        function drawStar(x, y, size, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+                const px = x + Math.cos(angle) * size;
+                const py = y + Math.sin(angle) * size;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+                const innerAngle = angle + Math.PI / 5;
+                ctx.lineTo(
+                    x + Math.cos(innerAngle) * size * 0.5,
+                    y + Math.sin(innerAngle) * size * 0.5
+                );
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawPlayer() {
+            const p = game.player;
+
+            ctx.save();
+            ctx.translate(p.x + p.width / 2, p.y + p.height / 2);
+
+            // Running animation
+            game.player.legAngle += 0.3;
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(-20, 25, 40, 8);
+
+            // Legs
+            ctx.strokeStyle = '#FFD4A3';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+
+            // Left leg
+            ctx.beginPath();
+            ctx.moveTo(-5, 10);
+            ctx.lineTo(-5 + Math.sin(game.player.legAngle) * 15, 20);
+            ctx.stroke();
+
+            // Right leg
+            ctx.beginPath();
+            ctx.moveTo(5, 10);
+            ctx.lineTo(5 - Math.sin(game.player.legAngle) * 15, 20);
+            ctx.stroke();
+
+            // Body
+            const bodyGradient = ctx.createLinearGradient(0, -20, 0, 15);
+            bodyGradient.addColorStop(0, '#4ECDC4');
+            bodyGradient.addColorStop(1, '#3BA89F');
+            ctx.fillStyle = bodyGradient;
+            ctx.fillRect(-15, -10, 30, 25);
+
+            // Number on jersey
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('10', 0, 5);
+
+            // Arms
+            ctx.strokeStyle = '#FFD4A3';
+            ctx.lineWidth = 5;
+
+            // Left arm
+            ctx.beginPath();
+            ctx.moveTo(-15, -5);
+            ctx.lineTo(-25, 5);
+            ctx.stroke();
+
+            // Right arm
+            ctx.beginPath();
+            ctx.moveTo(15, -5);
+            ctx.lineTo(25, 5);
+            ctx.stroke();
+
+            // Head
+            const headGradient = ctx.createRadialGradient(-5, -25, 5, 0, -20, 15);
+            headGradient.addColorStop(0, '#FFE4B5');
+            headGradient.addColorStop(1, '#FFD4A3');
+            ctx.fillStyle = headGradient;
+            ctx.beginPath();
+            ctx.arc(0, -20, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hair (anime style)
+            ctx.fillStyle = '#2C1810';
+            ctx.beginPath();
+            ctx.arc(-5, -28, 12, 0, Math.PI * 2);
+            ctx.arc(5, -30, 10, 0, Math.PI * 2);
+            ctx.arc(0, -32, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eyes (determined look)
+            ctx.fillStyle = 'white';
+            ctx.fillRect(-8, -22, 5, 3);
+            ctx.fillRect(3, -22, 5, 3);
+            ctx.fillStyle = '#2C1810';
+            ctx.fillRect(-6, -22, 3, 3);
+            ctx.fillRect(5, -22, 3, 3);
+
+            // Determined mouth
+            ctx.strokeStyle = '#2C1810';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, -15, 4, 0, Math.PI);
+            ctx.stroke();
+
+            ctx.restore();
+
+            // Draw soccer ball if dribbling
+            if (p.hasBall) {
+                drawSoccerBall(p.x + 30, p.y + 40, 12);
+            }
+        }
+
+        function drawSoccerBall(x, y, radius) {
+            // White base
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Black pentagons
+            ctx.fillStyle = '#333';
+            for (let i = 0; i < 5; i++) {
+                const angle = (Math.PI * 2 / 5) * i + game.frame * 0.1;
+                const px = x + Math.cos(angle) * (radius * 0.5);
+                const py = y + Math.sin(angle) * (radius * 0.5);
+                ctx.beginPath();
+                ctx.arc(px, py, radius * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawObstacle(obs) {
+            if (obs.type === 'cone') {
+                // Traffic cone
+                const gradient = ctx.createLinearGradient(obs.x, obs.y, obs.x, obs.y + obs.height);
+                gradient.addColorStop(0, '#FF6347');
+                gradient.addColorStop(0.5, '#FF4500');
+                gradient.addColorStop(1, '#DC143C');
+                ctx.fillStyle = gradient;
+
+                ctx.beginPath();
+                ctx.moveTo(obs.x + obs.width / 2, obs.y);
+                ctx.lineTo(obs.x + obs.width, obs.y + obs.height);
+                ctx.lineTo(obs.x, obs.y + obs.height);
+                ctx.closePath();
+                ctx.fill();
+
+                // White stripe
+                ctx.fillStyle = 'white';
+                ctx.fillRect(obs.x + 5, obs.y + obs.height / 2 - 3, obs.width - 10, 6);
+            } else {
+                // Opponent player
+                ctx.save();
+                ctx.translate(obs.x + obs.width / 2, obs.y + obs.height / 2);
+
+                // Body
+                ctx.fillStyle = '#E74C3C';
+                ctx.fillRect(-15, -10, 30, 25);
+
+                // Head
+                ctx.fillStyle = '#FFD4A3';
+                ctx.beginPath();
+                ctx.arc(0, -20, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Angry eyes
+                ctx.fillStyle = '#2C1810';
+                ctx.fillRect(-8, -22, 4, 2);
+                ctx.fillRect(4, -22, 4, 2);
+
+                // Arms out (blocking)
+                ctx.strokeStyle = '#FFD4A3';
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(-15, 0);
+                ctx.lineTo(-25, -5);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(15, 0);
+                ctx.lineTo(25, -5);
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        function drawCollectible(col) {
+            col.angle += 0.1;
+            drawSoccerBall(col.x + col.width / 2, col.y + col.height / 2 + Math.sin(col.angle) * 5, col.width / 2);
+
+            // Glow effect
+            ctx.save();
+            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(col.x + col.width / 2, col.y + col.height / 2, col.width / 2 + 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawUI() {
+            // Zone indicator
+            const zone = zones[game.currentZone];
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(10, 10, 300, 80);
+
+            ctx.fillStyle = zone.color;
+            ctx.font = 'bold 32px Fredoka One';
+            ctx.textAlign = 'left';
+            ctx.fillText(zone.name + ' ZONE', 20, 45);
+
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Fredoka One';
+            ctx.fillText('Distance: ' + Math.floor(game.distance) + 'm', 20, 75);
+
+            // Score
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(canvas.width - 210, 10, 200, 50);
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 28px Fredoka One';
+            ctx.textAlign = 'right';
+            ctx.fillText('⚽ ' + game.score, canvas.width - 20, 45);
+
+            // Progress bar
+            const barWidth = 300;
+            const barHeight = 20;
+            const barX = canvas.width / 2 - barWidth / 2;
+            const barY = canvas.height - 40;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(barX - 5, barY - 5, barWidth + 10, barHeight + 10);
+
+            // Zone segments
+            for (let i = 0; i < zones.length; i++) {
+                const segmentWidth = barWidth / zones.length;
+                const segmentX = barX + i * segmentWidth;
+
+                ctx.fillStyle = zones[i].color;
+                ctx.fillRect(segmentX, barY, segmentWidth - 2, barHeight);
+
+                if (i < zones.length - 1) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(zones[i + 1].distance, segmentX + segmentWidth, barY - 5);
+                }
+            }
+
+            // Current position indicator
+            const progress = Math.min(game.distance / zones[zones.length - 1].distance, 1);
+            const indicatorX = barX + progress * barWidth;
+
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(indicatorX, barY + barHeight / 2, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        function update() {
+            if (!game.running) return;
+
+            game.frame++;
+
+            // Update distance
+            game.distance += game.gameSpeed * 0.5;
+            updateZone();
+
+            // Player movement
+            if (game.keys['ArrowUp'] || game.keys['w']) {
+                game.player.targetY -= game.player.speed;
+            }
+            if (game.keys['ArrowDown'] || game.keys['s']) {
+                game.player.targetY += game.player.speed;
+            }
+
+            if (game.mouseY !== null) {
+                game.player.targetY = game.mouseY - game.player.height / 2;
+            }
+
+            // Smooth movement
+            game.player.y += (game.player.targetY - game.player.y) * 0.15;
+
+            // Keep player in bounds
+            game.player.y = Math.max(50, Math.min(canvas.height - game.player.height - 50, game.player.y));
+            game.player.targetY = Math.max(50, Math.min(canvas.height - game.player.height - 50, game.player.targetY));
+
+            // Spawn obstacles
+            if (Math.random() < 0.02 + game.currentZone * 0.005) {
+                spawnObstacle();
+            }
+
+            // Spawn collectibles
+            if (Math.random() < 0.015) {
+                spawnCollectible();
+            }
+
+            // Update obstacles
+            game.obstacles = game.obstacles.filter(obs => {
+                obs.x -= game.gameSpeed;
+
+                if (checkCollision(game.player, obs)) {
+                    // Collision! Slow down but don't end game
+                    game.distance -= 50;
+                    game.distance = Math.max(0, game.distance);
+
+                    // Particle explosion
+                    for (let i = 0; i < 15; i++) {
+                        game.particles.push(new Particle(obs.x + obs.width / 2, obs.y + obs.height / 2, '#ff6b6b'));
+                    }
+
+                    return false;
+                }
+
+                return obs.x + obs.width > 0;
+            });
+
+            // Update collectibles
+            game.collectibles = game.collectibles.filter(col => {
+                col.x -= game.gameSpeed;
+
+                if (checkCollision(game.player, col)) {
+                    game.score += 10;
+
+                    // Particle celebration
+                    for (let i = 0; i < 20; i++) {
+                        game.particles.push(new Particle(col.x + col.width / 2, col.y + col.height / 2, '#FFD700'));
+                    }
+
+                    return false;
+                }
+
+                return col.x + col.width > 0;
+            });
+
+            // Update particles
+            game.particles = game.particles.filter(p => p.update());
+        }
+
+        function draw() {
+            drawBackground();
+
+            // Draw particles behind
+            game.particles.forEach(p => p.draw());
+
+            // Draw game objects
+            game.obstacles.forEach(obs => drawObstacle(obs));
+            game.collectibles.forEach(col => drawCollectible(col));
+            drawPlayer();
+
+            // Draw UI
+            drawUI();
+
+            // Mythic zone reached message
+            if (game.currentZone === 4 && !game.won) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(0, canvas.height / 2 - 60, canvas.width, 120);
+
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 48px Bangers';
+                ctx.textAlign = 'center';
+                ctx.fillText('🌟 MYTHIC ZONE REACHED! 🌟', canvas.width / 2, canvas.height / 2);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 32px Fredoka One';
+                ctx.fillText('YOU ARE A LEGEND!', canvas.width / 2, canvas.height / 2 + 40);
+            }
+        }
+
+        function endGame() {
+            game.running = false;
+
+            const title = document.getElementById('gameOverTitle');
+            const stats = document.getElementById('finalStats');
+
+            if (game.won) {
+                title.textContent = '🌟 MYTHIC ZONE REACHED! 🌟';
+                stats.innerHTML = `
+                    <div class="zone-item mythic">YOU ARE A LEGEND!</div><br><br>
+                    <div style="font-size: 28px;">
+                        Final Distance: ${Math.floor(game.distance)}m<br>
+                        Soccer Balls Collected: ${game.score / 10}<br>
+                        Final Score: ${game.score} ⚽
+                    </div>
+                `;
+            } else {
+                const zone = zones[game.currentZone];
+                title.textContent = '🏃‍♂️ GREAT RUN! 🏃‍♂️';
+                stats.innerHTML = `
+                    <div class="zone-item" style="background: ${zone.color};">Reached: ${zone.name} ZONE</div><br><br>
+                    <div style="font-size: 24px;">
+                        Distance: ${Math.floor(game.distance)}m<br>
+                        Score: ${game.score} ⚽<br><br>
+                        Keep trying to reach MYTHIC!
+                    </div>
+                `;
+            }
+
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        function gameLoop() {
+            if (!game.running) return;
+
+            update();
+            draw();
+
+            requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+</html>
