@@ -79,12 +79,12 @@ git push origin main
 
 Your game will be live at:
 ```
-https://narasimman-kb.github.io/kids-penalty-shootout/
+
 ```
 
 Or if you named it `zone-runner.html`:
 ```
-https://narasimman-kb.github.io/kids-penalty-shootout/zone-runner.html
+
 ```
 
 Share this link with your kids - they can play on ANY device!
